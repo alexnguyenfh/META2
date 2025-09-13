@@ -395,7 +395,7 @@
                 <label for="imageUpload">Upload ảnh cần chỉnh sửa:</label>
                 <div class="file-upload">
                     <input type="file" id="imageUpload" class="file-input" accept="image/*">
-                    <label for="imageUpload" class="file-label" id="fileLabel" onclick="clearFileInput()">
+                    <label for="imageUpload" class="file-label" id="fileLabel">
                         📁 Chọn ảnh để upload (PNG, JPG, JPEG)
                     </label>
                 </div>
@@ -463,9 +463,6 @@
         document.getElementById('imageUpload').addEventListener('change', function(event) {
             const file = event.target.files[0];
             if (file) {
-                // Reset previous results when new file is selected
-                resetPreviousResults();
-                
                 // Validate file type
                 if (!file.type.startsWith('image/')) {
                     showError('Vui lòng chọn một file ảnh hợp lệ!');
@@ -487,10 +484,6 @@
                 };
                 
                 reader.readAsDataURL(file);
-            } else {
-                // If no file selected, reset everything
-                resetPreviousResults();
-                resetImagePreview();
             }
         });
 
@@ -498,12 +491,8 @@
             const preview = document.getElementById('imagePreview');
             const fileLabel = document.getElementById('fileLabel');
             
-            // Force refresh the image by adding timestamp to avoid cache issues
-            const timestamp = new Date().getTime();
-            const imageUrl = `${imageSrc}?t=${timestamp}`;
-            
             preview.innerHTML = `
-                <img src="${imageUrl}" class="preview-image" alt="Preview" key="${timestamp}">
+                <img src="${imageSrc}" class="preview-image" alt="Preview">
                 <div class="image-info">
                     <strong>${file.name}</strong><br>
                     Kích thước: ${(file.size / 1024).toFixed(1)} KB | 
@@ -594,10 +583,9 @@
                             const imageData = imagePart.inlineData.data;
                             const resultMimeType = imagePart.inlineData.mimeType || 'image/png';
                             
-                            // Display comparison with timestamp to avoid cache issues
-                            const timestamp = new Date().getTime();
-                            document.getElementById('originalImage').src = `${currentOriginalImage}?t=${timestamp}`;
-                            document.getElementById('editedImage').src = `data:${resultMimeType};base64,${imageData}?t=${timestamp}`;
+                            // Display comparison
+                            document.getElementById('originalImage').src = currentOriginalImage;
+                            document.getElementById('editedImage').src = `data:${resultMimeType};base64,${imageData}`;
                             
                             // Store edited image data for download
                             currentEditedImageData = {
@@ -662,30 +650,12 @@
             
             // Reset UI
             document.getElementById('imageUpload').value = '';
-            resetImagePreview();
+            document.getElementById('imagePreview').innerHTML = '<p style="color: #666; margin: 0;">Chưa có ảnh nào được chọn</p>';
+            document.getElementById('imagePreview').classList.remove('has-image');
+            document.getElementById('fileLabel').classList.remove('has-file');
+            document.getElementById('fileLabel').innerHTML = '📁 Chọn ảnh để upload (PNG, JPG, JPEG)';
             document.getElementById('resultSection').classList.add('hidden');
             hideMessages();
-        }
-
-        function resetPreviousResults() {
-            // Clear previous edited image data but keep original image
-            currentEditedImageData = null;
-            document.getElementById('resultSection').classList.add('hidden');
-            hideMessages();
-        }
-
-        function resetImagePreview() {
-            const preview = document.getElementById('imagePreview');
-            const fileLabel = document.getElementById('fileLabel');
-            
-            preview.innerHTML = '<p style="color: #666; margin: 0;">Chưa có ảnh nào được chọn</p>';
-            preview.classList.remove('has-image');
-            fileLabel.classList.remove('has-file');
-            fileLabel.innerHTML = '📁 Chọn ảnh để upload (PNG, JPG, JPEG)';
-            
-            // Clear the current image data
-            currentOriginalImage = null;
-            originalFileName = '';
         }
 
         function setPrompt(prompt) {
@@ -716,12 +686,6 @@
         function hideMessages() {
             document.getElementById('errorMessage').classList.remove('show');
             document.getElementById('successMessage').classList.remove('show');
-        }
-
-        function clearFileInput() {
-            // Clear the input value before opening file dialog to ensure change event fires
-            const input = document.getElementById('imageUpload');
-            input.value = '';
         }
 
         // Allow Ctrl+Enter to trigger editing in textarea
@@ -768,14 +732,9 @@
             const files = dt.files;
             
             if (files.length > 0) {
-                // Clear the input first to ensure change event fires even for same file
-                const input = document.getElementById('imageUpload');
-                input.value = '';
-                
-                // Set the files and trigger change event
-                input.files = files;
+                document.getElementById('imageUpload').files = files;
                 const event = new Event('change', { bubbles: true });
-                input.dispatchEvent(event);
+                document.getElementById('imageUpload').dispatchEvent(event);
             }
         }
     </script>
