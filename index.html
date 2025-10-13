@@ -1,131 +1,297 @@
 <!DOCTYPE html>
-<html lang="en-us">
-  <head>
-    <meta charset="utf-8">
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-    <title>Unity WebGL Player | META2</title>
-    <link rel="shortcut icon" href="TemplateData/favicon.ico">
-    <link rel="stylesheet" href="TemplateData/style.css">
-  </head>
-  <body>
-    <div id="unity-container" class="unity-desktop">
-      <canvas id="unity-canvas" width=960 height=600 tabindex="-1"></canvas>
-      <div id="unity-loading-bar">
-        <div id="unity-logo"></div>
-        <div id="unity-progress-bar-empty">
-          <div id="unity-progress-bar-full"></div>
+<html lang="vi">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>AI Render Lab — 2D→3D & Ảnh</title>
+  <style>
+    :root{
+      --bg:#0b0e14;--card:#111625;--muted:#96a0b5;--text:#e6edf7;--accent:#4f8cff;--ok:#3ecf8e;--warn:#ffb454;
+      --br:16px;--gap:16px;--shadow:0 10px 30px rgba(0,0,0,.35)
+    }
+    *{box-sizing:border-box} html,body{height:100%}
+    body{margin:0;background:linear-gradient(180deg,#0b0e14,#0e1320 40%);color:var(--text);font:15px/1.5 system-ui,Segoe UI,Roboto,Helvetica,Arial}
+    .container{max-width:1120px;margin:auto;padding:24px}
+    header{display:flex;align-items:center;gap:12px}
+    h1{font-weight:800;font-size:22px;margin:0}
+    .chip{font-size:12px;border:1px solid #2a3550;padding:4px 8px;border-radius:999px;color:var(--muted)}
+    .grid{display:grid;grid-template-columns:1.2fr .8fr;gap:var(--gap);margin-top:var(--gap)}
+    .card{background:linear-gradient(180deg,#0f1629,#0b1220);border:1px solid #1c2742;border-radius:var(--br);box-shadow:var(--shadow)}
+    .card h3{margin:0 0 8px 0;font-size:15px;letter-spacing:.2px}
+    .sect{padding:18px 18px 16px;border-bottom:1px solid #1c2742}
+    .sect:last-child{border-bottom:0}
+    label{display:block;color:#c7d2ea;margin:8px 0 6px;font-size:13px}
+    input[type="text"],input[type="file"],textarea,select{width:100%;background:#0b1020;border:1px solid #223054;color:var(--text);border-radius:10px;padding:10px 12px;outline:none}
+    textarea{min-height:92px;resize:vertical}
+    .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+    .btn{appearance:none;border:1px solid #2a3550;background:linear-gradient(180deg,#17223a,#0d1220);color:#dfe8ff;border-radius:12px;padding:10px 14px;font-weight:700;cursor:pointer}
+    .btn:hover{border-color:#3a4a77}
+    .btn.primary{background:linear-gradient(180deg,#4376ff,#2a4de1);border-color:#3261ff;color:white}
+    .btn.ghost{background:transparent}
+    .kbd{font-family:ui-monospace, SFMono-Regular, Menlo, monospace;font-size:12px;color:#b2c0e0}
+    .help{color:var(--muted);font-size:12px}
+    .gallery{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px}
+    .thumb{position:relative;border-radius:14px;overflow:hidden;border:1px solid #1f2b49}
+    .thumb img{width:100%;display:block}
+    .pill{display:inline-flex;gap:6px;align-items:center;padding:6px 10px;border-radius:999px;border:1px solid #2a3550;color:var(--muted);font-size:12px}
+    .log{white-space:pre-wrap;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;background:#0a0f1c;border:1px solid #1c2742;padding:12px;border-radius:12px;color:#b6c3e2}
+    footer{margin:24px 0 8px;color:#7081a8;text-align:center;font-size:12px}
+    @media (max-width:980px){.grid{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>AI Render Lab</h1>
+      <span class="chip">Gemini / Imagen (Google AI Studio)</span>
+    </header>
+
+    <div class="grid">
+      <!-- LEFT: Controls -->
+      <section class="card">
+        <div class="sect">
+          <h3>1) Khoá API</h3>
+          <div class="row">
+            <input id="apiKey" type="text" placeholder="Dán API Key của Google AI Studio (Gemini/Imagen)" />
+            <button class="btn" id="saveKey">Lưu</button>
+            <button class="btn ghost" id="clearKey">Xoá</button>
+          </div>
+          <div class="help">Key chỉ lưu trong <span class="kbd">localStorage</span> của trình duyệt này.</div>
         </div>
-      </div>
-      <div id="unity-warning"> </div>
-      <div id="unity-footer">
-        <div id="unity-webgl-logo"></div>
-        <div id="unity-fullscreen-button"></div>
-        <div id="unity-build-title">META2</div>
-      </div>
+
+        <div class="sect">
+          <h3>2) Chọn tác vụ</h3>
+          <label for="task">Loại tác vụ</label>
+          <select id="task">
+            <option value="interior-sketch">Render nội thất từ phác thảo</option>
+            <option value="exterior-sketch">Render ngoại thất từ phác thảo</option>
+            <option value="floorplan-3d">2D Floorplan → 3D render</option>
+            <option value="image-edit">Chỉnh sửa ảnh (thêm/xoá đối tượng)</option>
+            <option value="utilities">Tiện ích khác (moodboard → render, đổi style, chèn công trình vào hiện trạng, tạo 2D từ phối cảnh…)</option>
+          </select>
+
+          <div class="row" style="margin-top:10px">
+            <span class="pill"><input id="useGemini" type="checkbox" checked /> Gemini 1.5 (dựng prompt / hướng dẫn)</span>
+            <span class="pill"><input id="useImagen" type="checkbox" checked /> Imagen 3 (tạo/biên tập ảnh)</span>
+          </div>
+        </div>
+
+        <div class="sect">
+          <h3>3) Dữ liệu đầu vào</h3>
+          <label>Ảnh phác thảo / mặt bằng / hiện trạng</label>
+          <input id="imageInput" type="file" multiple accept="image/*" />
+
+          <label>Mô tả mong muốn (phong cách, chất liệu, góc nhìn…)</label>
+          <textarea id="userNotes" placeholder="VD: Phong cách Japandi, tông gỗ sồi + vải lanh; ánh sáng ban sớm; render 4K, camera 24mm…"></textarea>
+
+          <div class="row">
+            <label style="margin-right:6px">Presets:</label>
+            <button class="btn ghost" data-preset="japandi">Japandi</button>
+            <button class="btn ghost" data-preset="scandinavian">Scandinavian</button>
+            <button class="btn ghost" data-preset="industrial">Industrial</button>
+            <button class="btn ghost" data-preset="modern-villa">Modern Villa Exterior</button>
+          </div>
+        </div>
+
+        <div class="sect">
+          <h3>4) Chạy</h3>
+          <div class="row">
+            <button class="btn primary" id="btnRun">Generate / Edit</button>
+            <button class="btn" id="btnOnlyPrompt">Chỉ tạo Prompt</button>
+          </div>
+          <div class="help" style="margin-top:8px">Kết quả sinh ảnh phụ thuộc model Imagen 3; nếu chỉ có Gemini, bạn vẫn nhận được prompt chi tiết để dùng ở tool khác.</div>
+        </div>
+
+        <div class="sect">
+          <h3>Nhật ký</h3>
+          <div id="log" class="log">Chưa chạy.</div>
+        </div>
+      </section>
+
+      <!-- RIGHT: Output -->
+      <section class="card">
+        <div class="sect">
+          <h3>Kết quả</h3>
+          <div id="promptOut" class="log" style="margin-bottom:12px"></div>
+          <div id="gallery" class="gallery"></div>
+        </div>
+      </section>
     </div>
-    <script>
 
-      var container = document.querySelector("#unity-container");
-      var canvas = document.querySelector("#unity-canvas");
-      var loadingBar = document.querySelector("#unity-loading-bar");
-      var progressBarFull = document.querySelector("#unity-progress-bar-full");
-      var fullscreenButton = document.querySelector("#unity-fullscreen-button");
-      var warningBanner = document.querySelector("#unity-warning");
+    <footer>
+      © 2025 — AI Render Lab • Dùng thử API Google AI Studio (Gemini/Imagen). Không gửi dữ liệu nếu bạn không bấm nút.
+    </footer>
+  </div>
 
-      // Shows a temporary message banner/ribbon for a few seconds, or
-      // a permanent error message on top of the canvas if type=='error'.
-      // If type=='warning', a yellow highlight color is used.
-      // Modify or remove this function to customize the visually presented
-      // way that non-critical warnings and error messages are presented to the
-      // user.
-      function unityShowBanner(msg, type) {
-        function updateBannerVisibility() {
-          warningBanner.style.display = warningBanner.children.length ? 'block' : 'none';
-        }
-        var div = document.createElement('div');
-        div.innerHTML = msg;
-        warningBanner.appendChild(div);
-        if (type == 'error') div.style = 'background: red; padding: 10px;';
-        else {
-          if (type == 'warning') div.style = 'background: yellow; padding: 10px;';
-          setTimeout(function() {
-            warningBanner.removeChild(div);
-            updateBannerVisibility();
-          }, 5000);
-        }
-        updateBannerVisibility();
-      }
+<script>
+// ---------- Helpers ----------
+const $ = (q) => document.querySelector(q);
+const $$ = (q) => Array.from(document.querySelectorAll(q));
+const log = (m) => { const el = document.getElementById('log'); el.textContent = (typeof m === 'string') ? m : JSON.stringify(m, null, 2); };
+const showPrompt = (t) => { document.getElementById('promptOut').textContent = t || '' };
+const gallery = document.getElementById('gallery');
 
-      var buildUrl = "Build";
-      var loaderUrl = buildUrl + "/test 3.loader.js";
-      var config = {
-        dataUrl: buildUrl + "/test 3.data.unityweb",
-        frameworkUrl: buildUrl + "/test 3.framework.js.unityweb",
-        codeUrl: buildUrl + "/test 3.wasm.unityweb",
-        streamingAssetsUrl: "StreamingAssets",
-        companyName: "DefaultCompany",
-        productName: "META2",
-        productVersion: "0.1.0",
-        showBanner: unityShowBanner,
+function loadKey(){ const v = localStorage.getItem('ai_key') || ''; document.getElementById('apiKey').value = v; return v }
+function saveKey(){ const v = document.getElementById('apiKey').value.trim(); localStorage.setItem('ai_key', v); log('Đã lưu API key vào trình duyệt.'); }
+function clearKey(){ localStorage.removeItem('ai_key'); document.getElementById('apiKey').value=''; log('Đã xoá API key.'); }
+
+async function filesToBase64(files){
+  const arr = [];
+  for(const f of files){
+    const b64 = await new Promise((res,rej)=>{ const r=new FileReader(); r.onload=()=>res(r.result.split(',')[1]); r.onerror=rej; r.readAsDataURL(f) });
+    arr.push({name:f.name, mime:f.type || 'image/png', data:b64});
+  }
+  return arr;
+}
+
+function buildSystemPrompt(){
+  const task = document.getElementById('task').value;
+  const map = {
+    'interior-sketch': `Bạn là kiến trúc sư + kỹ sư CGI. Nhận phác thảo/mặt bằng và tạo prompt ảnh để render nội thất hiện thực: bố cục, vật liệu, ánh sáng, góc máy, tỉ lệ, render pass. Trả về prompt súc tích bằng tiếng Việt, kèm negative prompt để tránh lỗi (vật thể méo, tường lượn sóng, bàn ghế bay...).`,
+    'exterior-sketch': `Bạn là kiến trúc sư cảnh quan. Tạo prompt render ngoại thất từ phác thảo/mặt đứng: mô tả khối, vật liệu (đá, kính low-e, lam gỗ), thời tiết, giờ chụp, lens, phối cảnh. Có thêm negative prompt.`,
+    'floorplan-3d': `Bạn là chuyên gia dựng 3D từ mặt bằng. Tạo prompt chuyển 2D floorplan thành phối cảnh 3D gồm chiều cao tường, cửa, vật liệu nền, ánh sáng và camera walkthrough.`,
+    'image-edit': `Bạn là chuyên gia chỉnh sửa ảnh AI. Tạo prompt biên tập để thêm hoặc xoá đối tượng thừa, giữ phối cảnh và ánh sáng nhất quán. Xuất cả khu vực/mặt nạ gợi ý (mô tả ngắn đối tượng cần thay đổi).`,
+    'utilities': `Bạn là trợ lý đồ hoạ kiến trúc. Tạo prompt cho: (1) render từ moodboard, (2) đổi style công trình, (3) chèn công trình vào ảnh hiện trạng, (4) tạo bản vẽ 2D từ phối cảnh. Mỗi mục ghi 1 đoạn riêng.`
+  };
+  return map[task] || map['interior-sketch'];
+}
+
+function buildUserPrompt(){
+  const notes = document.getElementById('userNotes').value.trim();
+  const task = document.getElementById('task').value;
+  let base = `Tác vụ: ${$('#task').selectedOptions[0].text}.\nYêu cầu thêm: ${notes || '(không)'}\nĐịnh dạng trả về: \n- PROMPT: ...\n- NEGATIVE: ...\n- THAM SỐ: (kích thước, bước, guidance)\n- HƯỚNG DẪN: (bước thực hiện với Imagen 3 hoặc công cụ tương đương)`;
+  if(task==='image-edit') base += `\nNếu là xoá đối tượng: mô tả tối thiểu 1-2 câu về đối tượng và vùng ảnh liên quan để dùng làm mask.`;
+  return base;
+}
+
+function ensureKey(){
+  const key = (document.getElementById('apiKey').value || '').trim();
+  if(!key){ log('Thiếu API key. Hãy dán key từ Google AI Studio.'); throw new Error('missing key'); }
+  return key;
+}
+
+// ---------- Google AI Studio calls ----------
+// Gemini 1.5 Flash — text/prompt building
+async function callGeminiPrompt({system,user,images}){
+  const key = ensureKey();
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${encodeURIComponent(key)}`;
+  const parts = [];
+  if(system) parts.push({text: system});
+  if(user) parts.push({text: user});
+  if(Array.isArray(images)){
+    for(const img of images){
+      parts.push({
+        inline_data: { mime_type: img.mime || 'image/png', data: img.data }
+      });
+    }
+  }
+  const body = { contents: [{ role:'user', parts }] };
+  const r = await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+  if(!r.ok){ const t = await r.text(); throw new Error('Gemini error: '+t); }
+  const j = await r.json();
+  const out = j.candidates?.[0]?.content?.parts?.map(p=>p.text).join('\n') || '(không có phản hồi)';
+  return out;
+}
+
+// Imagen 3 — image generation (Google Image Generation API)
+// NOTE: Yêu cầu bật "Image generation" trong AI Studio và dùng model imagen-3.0
+async function callImagenGenerate(prompt, n=1){
+  const key = ensureKey();
+  const url = `https://imagegeneration.googleapis.com/v1beta/images:generate?key=${encodeURIComponent(key)}`;
+  const body = { model: 'imagen-3.0-generate-001', prompts: [{ text: prompt }], aspectRatio: 'ASPECT_RATIO_1_1', numberOfImages: n };
+  const r = await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+  if(!r.ok){ const t = await r.text(); throw new Error('Imagen error: '+t); }
+  const j = await r.json();
+  const imgs = (j.images || []).map(x => x.image?.base64Data).filter(Boolean);
+  return imgs; // array of base64 PNGs
+}
+
+// Imagen 3 — edit (basic text-driven edit). Some accounts may not have access; fallback = prompt-only
+async function callImagenEdit(prompt, base64){
+  const key = ensureKey();
+  const url = `https://imagegeneration.googleapis.com/v1beta/images:edit?key=${encodeURIComponent(key)}`;
+  const body = { model: 'imagen-3.0-edit-001', edits: [{ 
+    baseImage: { image: { base64Data: base64 } },
+    instruction: { text: prompt }
+  }]};
+  const r = await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+  if(!r.ok){ const t = await r.text(); throw new Error('Imagen edit error: '+t); }
+  const j = await r.json();
+  const imgs = (j.images || []).map(x => x.image?.base64Data).filter(Boolean);
+  return imgs;
+}
+
+function b64ToImgEl(b64){
+  const img = new Image();
+  img.src = 'data:image/png;base64,' + b64;
+  img.loading='lazy';
+  return img;
+}
+
+function addToGallery(base64Arr){
+  for(const b64 of base64Arr){
+    const wrap = document.createElement('div');
+    wrap.className='thumb';
+    const img = b64ToImgEl(b64);
+    wrap.appendChild(img);
+    gallery.prepend(wrap);
+  }
+}
+
+// ---------- UI actions ----------
+window.addEventListener('DOMContentLoaded',()=>{
+  loadKey();
+  document.getElementById('saveKey').onclick = saveKey;
+  document.getElementById('clearKey').onclick = clearKey;
+
+  $$('#\[data-preset\]').forEach(btn=>{
+    btn.addEventListener('click',()=>{
+      const preset = btn.dataset.preset;
+      const map={
+        japandi:'Phong cách Japandi, vật liệu gỗ sồi + vải lanh, ánh sáng dịu, cây xanh vừa phải, palette trung tính.',
+        scandinavian:'Scandinavian sáng sủa, trắng + gỗ sáng, cửa sổ lớn, ánh sáng tự nhiên.',
+        industrial:'Industrial, bê tông trần, kim loại đen, gạch thô, đèn treo công nghiệp.',
+        'modern-villa':'Biệt thự hiện đại, kính lớn, lam gỗ ngang, bể bơi, vườn tối giản.'
       };
+      const ta = document.getElementById('userNotes');
+      ta.value = (ta.value? ta.value+' ': '') + (map[preset]||preset);
+    })
+  })
 
-      // By default, Unity keeps WebGL canvas render target size matched with
-      // the DOM size of the canvas element (scaled by window.devicePixelRatio)
-      // Set this to false if you want to decouple this synchronization from
-      // happening inside the engine, and you would instead like to size up
-      // the canvas DOM size and WebGL render target sizes yourself.
-      // config.matchWebGLToCanvasSize = false;
+  document.getElementById('btnOnlyPrompt').onclick = async ()=>{
+    try{
+      log('Đang dựng prompt bằng Gemini…');
+      const imgs = await filesToBase64(document.getElementById('imageInput').files);
+      const out = await callGeminiPrompt({system:buildSystemPrompt(), user:buildUserPrompt(), images:imgs});
+      showPrompt(out); log('Đã tạo prompt.');
+    }catch(e){ log(e.message) }
+  };
 
-      // If you would like all file writes inside Unity Application.persistentDataPath
-      // directory to automatically persist so that the contents are remembered when
-      // the user revisits the site the next time, uncomment the following line:
-      // config.autoSyncPersistentDataPath = true;
-      // This autosyncing is currently not the default behavior to avoid regressing
-      // existing user projects that might rely on the earlier manual
-      // JS_FileSystem_Sync() behavior, but in future Unity version, this will be
-      // expected to change.
+  document.getElementById('btnRun').onclick = async ()=>{
+    const task = document.getElementById('task').value;
+    try{
+      log('Đang xử lý…');
+      const imgs = await filesToBase64(document.getElementById('imageInput').files);
+      const prompt = await callGeminiPrompt({system:buildSystemPrompt(), user:buildUserPrompt(), images:imgs});
+      showPrompt(prompt);
 
-      if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
-        // Mobile device style: fill the whole browser client area with the game canvas:
+      const useImagen = document.getElementById('useImagen').checked;
+      if(!useImagen){ log('Chỉ tạo prompt (Imagen bị tắt).'); return }
 
-        var meta = document.createElement('meta');
-        meta.name = 'viewport';
-        meta.content = 'width=device-width, height=device-height, initial-scale=1.0, user-scalable=no, shrink-to-fit=yes';
-        document.getElementsByTagName('head')[0].appendChild(meta);
-        container.className = "unity-mobile";
-        canvas.className = "unity-mobile";
-
-        // To lower canvas resolution on mobile devices to gain some
-        // performance, uncomment the following line:
-        // config.devicePixelRatio = 1;
-
-
+      // If editing and have a base image → try edit; else generate
+      if(task==='image-edit' && imgs.length){
+        const b64 = imgs[0].data; // dùng ảnh đầu tiên làm nền để sửa
+        const outImgs = await callImagenEdit(prompt, b64);
+        if(outImgs.length){ addToGallery(outImgs); log('Đã chỉnh sửa ảnh (Imagen Edit).'); }
+        else{ log('Không nhận được ảnh từ Imagen Edit.'); }
       } else {
-        // Desktop style: Render the game canvas in a window that can be maximized to fullscreen:
-
-        canvas.style.width = "960px";
-        canvas.style.height = "600px";
+        const outImgs = await callImagenGenerate(prompt, 2);
+        if(outImgs.length){ addToGallery(outImgs); log('Đã tạo ảnh (Imagen Generate).'); }
+        else{ log('Không nhận được ảnh từ Imagen Generate.'); }
       }
-
-      loadingBar.style.display = "block";
-
-      var script = document.createElement("script");
-      script.src = loaderUrl;
-      script.onload = () => {
-        createUnityInstance(canvas, config, (progress) => {
-          progressBarFull.style.width = 100 * progress + "%";
-              }).then((unityInstance) => {
-                loadingBar.style.display = "none";
-                fullscreenButton.onclick = () => {
-                  unityInstance.SetFullscreen(1);
-                };
-              }).catch((message) => {
-                alert(message);
-              });
-            };
-
-      document.body.appendChild(script);
-
-    </script>
-  </body>
+    }catch(e){ log(e.message) }
+  };
+});
+</script>
+</body>
 </html>
