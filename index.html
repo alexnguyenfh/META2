@@ -1,297 +1,216 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>AI Render Lab — 2D→3D & Ảnh</title>
-  <style>
-    :root{
-      --bg:#0b0e14;--card:#111625;--muted:#96a0b5;--text:#e6edf7;--accent:#4f8cff;--ok:#3ecf8e;--warn:#ffb454;
-      --br:16px;--gap:16px;--shadow:0 10px 30px rgba(0,0,0,.35)
-    }
-    *{box-sizing:border-box} html,body{height:100%}
-    body{margin:0;background:linear-gradient(180deg,#0b0e14,#0e1320 40%);color:var(--text);font:15px/1.5 system-ui,Segoe UI,Roboto,Helvetica,Arial}
-    .container{max-width:1120px;margin:auto;padding:24px}
-    header{display:flex;align-items:center;gap:12px}
-    h1{font-weight:800;font-size:22px;margin:0}
-    .chip{font-size:12px;border:1px solid #2a3550;padding:4px 8px;border-radius:999px;color:var(--muted)}
-    .grid{display:grid;grid-template-columns:1.2fr .8fr;gap:var(--gap);margin-top:var(--gap)}
-    .card{background:linear-gradient(180deg,#0f1629,#0b1220);border:1px solid #1c2742;border-radius:var(--br);box-shadow:var(--shadow)}
-    .card h3{margin:0 0 8px 0;font-size:15px;letter-spacing:.2px}
-    .sect{padding:18px 18px 16px;border-bottom:1px solid #1c2742}
-    .sect:last-child{border-bottom:0}
-    label{display:block;color:#c7d2ea;margin:8px 0 6px;font-size:13px}
-    input[type="text"],input[type="file"],textarea,select{width:100%;background:#0b1020;border:1px solid #223054;color:var(--text);border-radius:10px;padding:10px 12px;outline:none}
-    textarea{min-height:92px;resize:vertical}
-    .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
-    .btn{appearance:none;border:1px solid #2a3550;background:linear-gradient(180deg,#17223a,#0d1220);color:#dfe8ff;border-radius:12px;padding:10px 14px;font-weight:700;cursor:pointer}
-    .btn:hover{border-color:#3a4a77}
-    .btn.primary{background:linear-gradient(180deg,#4376ff,#2a4de1);border-color:#3261ff;color:white}
-    .btn.ghost{background:transparent}
-    .kbd{font-family:ui-monospace, SFMono-Regular, Menlo, monospace;font-size:12px;color:#b2c0e0}
-    .help{color:var(--muted);font-size:12px}
-    .gallery{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px}
-    .thumb{position:relative;border-radius:14px;overflow:hidden;border:1px solid #1f2b49}
-    .thumb img{width:100%;display:block}
-    .pill{display:inline-flex;gap:6px;align-items:center;padding:6px 10px;border-radius:999px;border:1px solid #2a3550;color:var(--muted);font-size:12px}
-    .log{white-space:pre-wrap;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;background:#0a0f1c;border:1px solid #1c2742;padding:12px;border-radius:12px;color:#b6c3e2}
-    footer{margin:24px 0 8px;color:#7081a8;text-align:center;font-size:12px}
-    @media (max-width:980px){.grid{grid-template-columns:1fr}}
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trình tạo ảnh AI với Google Gemini</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f4f4f4;
+            color: #333;
+        }
+        h1 {
+            text-align: center;
+            color: #4285f4;
+        }
+        #api-key-section {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        input[type="password"] {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        button {
+            background-color: #4285f4;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background-color: #3367d6;
+        }
+        button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+        #prompt-section {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        textarea {
+            width: 100%;
+            height: 100px;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+            resize: vertical;
+        }
+        #generate-btn {
+            display: block;
+            margin: 10px auto;
+        }
+        #loading {
+            text-align: center;
+            display: none;
+            color: #4285f4;
+        }
+        #image-section {
+            text-align: center;
+            margin-top: 20px;
+        }
+        #generated-image {
+            max-width: 100%;
+            height: auto;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            display: none;
+        }
+        #error {
+            color: #d93025;
+            text-align: center;
+            display: none;
+            margin: 10px 0;
+        }
+        #success {
+            color: #137333;
+            text-align: center;
+            display: none;
+            margin: 10px 0;
+        }
+    </style>
 </head>
 <body>
-  <div class="container">
-    <header>
-      <h1>AI Render Lab</h1>
-      <span class="chip">Gemini / Imagen (Google AI Studio)</span>
-    </header>
-
-    <div class="grid">
-      <!-- LEFT: Controls -->
-      <section class="card">
-        <div class="sect">
-          <h3>1) Khoá API</h3>
-          <div class="row">
-            <input id="apiKey" type="text" placeholder="Dán API Key của Google AI Studio (Gemini/Imagen)" />
-            <button class="btn" id="saveKey">Lưu</button>
-            <button class="btn ghost" id="clearKey">Xoá</button>
-          </div>
-          <div class="help">Key chỉ lưu trong <span class="kbd">localStorage</span> của trình duyệt này.</div>
-        </div>
-
-        <div class="sect">
-          <h3>2) Chọn tác vụ</h3>
-          <label for="task">Loại tác vụ</label>
-          <select id="task">
-            <option value="interior-sketch">Render nội thất từ phác thảo</option>
-            <option value="exterior-sketch">Render ngoại thất từ phác thảo</option>
-            <option value="floorplan-3d">2D Floorplan → 3D render</option>
-            <option value="image-edit">Chỉnh sửa ảnh (thêm/xoá đối tượng)</option>
-            <option value="utilities">Tiện ích khác (moodboard → render, đổi style, chèn công trình vào hiện trạng, tạo 2D từ phối cảnh…)</option>
-          </select>
-
-          <div class="row" style="margin-top:10px">
-            <span class="pill"><input id="useGemini" type="checkbox" checked /> Gemini 1.5 (dựng prompt / hướng dẫn)</span>
-            <span class="pill"><input id="useImagen" type="checkbox" checked /> Imagen 3 (tạo/biên tập ảnh)</span>
-          </div>
-        </div>
-
-        <div class="sect">
-          <h3>3) Dữ liệu đầu vào</h3>
-          <label>Ảnh phác thảo / mặt bằng / hiện trạng</label>
-          <input id="imageInput" type="file" multiple accept="image/*" />
-
-          <label>Mô tả mong muốn (phong cách, chất liệu, góc nhìn…)</label>
-          <textarea id="userNotes" placeholder="VD: Phong cách Japandi, tông gỗ sồi + vải lanh; ánh sáng ban sớm; render 4K, camera 24mm…"></textarea>
-
-          <div class="row">
-            <label style="margin-right:6px">Presets:</label>
-            <button class="btn ghost" data-preset="japandi">Japandi</button>
-            <button class="btn ghost" data-preset="scandinavian">Scandinavian</button>
-            <button class="btn ghost" data-preset="industrial">Industrial</button>
-            <button class="btn ghost" data-preset="modern-villa">Modern Villa Exterior</button>
-          </div>
-        </div>
-
-        <div class="sect">
-          <h3>4) Chạy</h3>
-          <div class="row">
-            <button class="btn primary" id="btnRun">Generate / Edit</button>
-            <button class="btn" id="btnOnlyPrompt">Chỉ tạo Prompt</button>
-          </div>
-          <div class="help" style="margin-top:8px">Kết quả sinh ảnh phụ thuộc model Imagen 3; nếu chỉ có Gemini, bạn vẫn nhận được prompt chi tiết để dùng ở tool khác.</div>
-        </div>
-
-        <div class="sect">
-          <h3>Nhật ký</h3>
-          <div id="log" class="log">Chưa chạy.</div>
-        </div>
-      </section>
-
-      <!-- RIGHT: Output -->
-      <section class="card">
-        <div class="sect">
-          <h3>Kết quả</h3>
-          <div id="promptOut" class="log" style="margin-bottom:12px"></div>
-          <div id="gallery" class="gallery"></div>
-        </div>
-      </section>
+    <h1>Trình tạo ảnh AI với Google Gemini API</h1>
+    
+    <div id="api-key-section">
+        <h2>Nhập API Key</h2>
+        <p>Để sử dụng, bạn cần có API Key từ <a href="https://aistudio.google.com/app/apikey" target="_blank">Google AI Studio</a>. Tạo key miễn phí tại đó (yêu cầu tài khoản Google).</p>
+        <input type="password" id="api-key" placeholder="Nhập API Key của bạn..." />
+        <button onclick="saveApiKey()">Lưu API Key</button>
+    </div>
+    
+    <div id="prompt-section">
+        <h2>Nhập mô tả ảnh</h2>
+        <p>Ví dụ: "Một con mèo dễ thương đang ngủ trên ghế sofa"</p>
+        <textarea id="prompt" placeholder="Mô tả ảnh bạn muốn tạo..."></textarea>
+        <button id="generate-btn" onclick="generateImage()">Tạo Ảnh</button>
+    </div>
+    
+    <div id="loading">Đang tạo ảnh... Vui lòng chờ.</div>
+    <div id="error"></div>
+    <div id="success"></div>
+    
+    <div id="image-section">
+        <img id="generated-image" alt="Ảnh được tạo" />
     </div>
 
-    <footer>
-      © 2025 — AI Render Lab • Dùng thử API Google AI Studio (Gemini/Imagen). Không gửi dữ liệu nếu bạn không bấm nút.
-    </footer>
-  </div>
+    <script>
+        let apiKey = localStorage.getItem('geminiApiKey') || '';
+        if (apiKey) {
+            document.getElementById('api-key').value = apiKey;
+        }
 
-<script>
-// ---------- Helpers ----------
-const $ = (q) => document.querySelector(q);
-const $$ = (q) => Array.from(document.querySelectorAll(q));
-const log = (m) => { const el = document.getElementById('log'); el.textContent = (typeof m === 'string') ? m : JSON.stringify(m, null, 2); };
-const showPrompt = (t) => { document.getElementById('promptOut').textContent = t || '' };
-const gallery = document.getElementById('gallery');
+        function saveApiKey() {
+            const keyInput = document.getElementById('api-key');
+            if (keyInput.value.trim()) {
+                apiKey = keyInput.value.trim();
+                localStorage.setItem('geminiApiKey', apiKey);
+                document.getElementById('success').textContent = 'API Key đã được lưu!';
+                document.getElementById('success').style.display = 'block';
+                setTimeout(() => {
+                    document.getElementById('success').style.display = 'none';
+                }, 3000);
+            } else {
+                showError('Vui lòng nhập API Key hợp lệ.');
+            }
+        }
 
-function loadKey(){ const v = localStorage.getItem('ai_key') || ''; document.getElementById('apiKey').value = v; return v }
-function saveKey(){ const v = document.getElementById('apiKey').value.trim(); localStorage.setItem('ai_key', v); log('Đã lưu API key vào trình duyệt.'); }
-function clearKey(){ localStorage.removeItem('ai_key'); document.getElementById('apiKey').value=''; log('Đã xoá API key.'); }
+        async function generateImage() {
+            const prompt = document.getElementById('prompt').value.trim();
+            if (!prompt) {
+                showError('Vui lòng nhập mô tả ảnh.');
+                return;
+            }
+            if (!apiKey) {
+                showError('Vui lòng nhập và lưu API Key trước.');
+                return;
+            }
 
-async function filesToBase64(files){
-  const arr = [];
-  for(const f of files){
-    const b64 = await new Promise((res,rej)=>{ const r=new FileReader(); r.onload=()=>res(r.result.split(',')[1]); r.onerror=rej; r.readAsDataURL(f) });
-    arr.push({name:f.name, mime:f.type || 'image/png', data:b64});
-  }
-  return arr;
-}
+            const loading = document.getElementById('loading');
+            const generateBtn = document.getElementById('generate-btn');
+            const errorDiv = document.getElementById('error');
+            const imageDiv = document.getElementById('generated-image');
 
-function buildSystemPrompt(){
-  const task = document.getElementById('task').value;
-  const map = {
-    'interior-sketch': `Bạn là kiến trúc sư + kỹ sư CGI. Nhận phác thảo/mặt bằng và tạo prompt ảnh để render nội thất hiện thực: bố cục, vật liệu, ánh sáng, góc máy, tỉ lệ, render pass. Trả về prompt súc tích bằng tiếng Việt, kèm negative prompt để tránh lỗi (vật thể méo, tường lượn sóng, bàn ghế bay...).`,
-    'exterior-sketch': `Bạn là kiến trúc sư cảnh quan. Tạo prompt render ngoại thất từ phác thảo/mặt đứng: mô tả khối, vật liệu (đá, kính low-e, lam gỗ), thời tiết, giờ chụp, lens, phối cảnh. Có thêm negative prompt.`,
-    'floorplan-3d': `Bạn là chuyên gia dựng 3D từ mặt bằng. Tạo prompt chuyển 2D floorplan thành phối cảnh 3D gồm chiều cao tường, cửa, vật liệu nền, ánh sáng và camera walkthrough.`,
-    'image-edit': `Bạn là chuyên gia chỉnh sửa ảnh AI. Tạo prompt biên tập để thêm hoặc xoá đối tượng thừa, giữ phối cảnh và ánh sáng nhất quán. Xuất cả khu vực/mặt nạ gợi ý (mô tả ngắn đối tượng cần thay đổi).`,
-    'utilities': `Bạn là trợ lý đồ hoạ kiến trúc. Tạo prompt cho: (1) render từ moodboard, (2) đổi style công trình, (3) chèn công trình vào ảnh hiện trạng, (4) tạo bản vẽ 2D từ phối cảnh. Mỗi mục ghi 1 đoạn riêng.`
-  };
-  return map[task] || map['interior-sketch'];
-}
+            loading.style.display = 'block';
+            generateBtn.disabled = true;
+            errorDiv.style.display = 'none';
+            imageDiv.style.display = 'none';
 
-function buildUserPrompt(){
-  const notes = document.getElementById('userNotes').value.trim();
-  const task = document.getElementById('task').value;
-  let base = `Tác vụ: ${$('#task').selectedOptions[0].text}.\nYêu cầu thêm: ${notes || '(không)'}\nĐịnh dạng trả về: \n- PROMPT: ...\n- NEGATIVE: ...\n- THAM SỐ: (kích thước, bước, guidance)\n- HƯỚNG DẪN: (bước thực hiện với Imagen 3 hoặc công cụ tương đương)`;
-  if(task==='image-edit') base += `\nNếu là xoá đối tượng: mô tả tối thiểu 1-2 câu về đối tượng và vùng ảnh liên quan để dùng làm mask.`;
-  return base;
-}
+            try {
+                const response = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=' + apiKey, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        contents: [{
+                            parts: [{
+                                text: `Generate an image with this prompt: ${prompt}`
+                            }]
+                        }],
+                        generationConfig: {
+                            response_mime_type: 'image/png'
+                        }
+                    })
+                });
 
-function ensureKey(){
-  const key = (document.getElementById('apiKey').value || '').trim();
-  if(!key){ log('Thiếu API key. Hãy dán key từ Google AI Studio.'); throw new Error('missing key'); }
-  return key;
-}
+                if (!response.ok) {
+                    throw new Error(`Lỗi API: ${response.status} ${response.statusText}`);
+                }
 
-// ---------- Google AI Studio calls ----------
-// Gemini 1.5 Flash — text/prompt building
-async function callGeminiPrompt({system,user,images}){
-  const key = ensureKey();
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${encodeURIComponent(key)}`;
-  const parts = [];
-  if(system) parts.push({text: system});
-  if(user) parts.push({text: user});
-  if(Array.isArray(images)){
-    for(const img of images){
-      parts.push({
-        inline_data: { mime_type: img.mime || 'image/png', data: img.data }
-      });
-    }
-  }
-  const body = { contents: [{ role:'user', parts }] };
-  const r = await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
-  if(!r.ok){ const t = await r.text(); throw new Error('Gemini error: '+t); }
-  const j = await r.json();
-  const out = j.candidates?.[0]?.content?.parts?.map(p=>p.text).join('\n') || '(không có phản hồi)';
-  return out;
-}
+                const data = await response.json();
+                if (data.candidates && data.candidates[0] && data.candidates[0].content.parts[0].inlineData) {
+                    const base64Image = data.candidates[0].content.parts[0].inlineData.data;
+                    const imageSrc = 'data:image/png;base64,' + base64Image;
+                    document.getElementById('generated-image').src = imageSrc;
+                    document.getElementById('generated-image').style.display = 'block';
+                } else {
+                    throw new Error('Không nhận được ảnh từ API.');
+                }
+            } catch (error) {
+                console.error('Lỗi:', error);
+                showError('Lỗi khi tạo ảnh: ' + error.message + '. Kiểm tra API Key và prompt.');
+            } finally {
+                loading.style.display = 'none';
+                generateBtn.disabled = false;
+            }
+        }
 
-// Imagen 3 — image generation (Google Image Generation API)
-// NOTE: Yêu cầu bật "Image generation" trong AI Studio và dùng model imagen-3.0
-async function callImagenGenerate(prompt, n=1){
-  const key = ensureKey();
-  const url = `https://imagegeneration.googleapis.com/v1beta/images:generate?key=${encodeURIComponent(key)}`;
-  const body = { model: 'imagen-3.0-generate-001', prompts: [{ text: prompt }], aspectRatio: 'ASPECT_RATIO_1_1', numberOfImages: n };
-  const r = await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
-  if(!r.ok){ const t = await r.text(); throw new Error('Imagen error: '+t); }
-  const j = await r.json();
-  const imgs = (j.images || []).map(x => x.image?.base64Data).filter(Boolean);
-  return imgs; // array of base64 PNGs
-}
-
-// Imagen 3 — edit (basic text-driven edit). Some accounts may not have access; fallback = prompt-only
-async function callImagenEdit(prompt, base64){
-  const key = ensureKey();
-  const url = `https://imagegeneration.googleapis.com/v1beta/images:edit?key=${encodeURIComponent(key)}`;
-  const body = { model: 'imagen-3.0-edit-001', edits: [{ 
-    baseImage: { image: { base64Data: base64 } },
-    instruction: { text: prompt }
-  }]};
-  const r = await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
-  if(!r.ok){ const t = await r.text(); throw new Error('Imagen edit error: '+t); }
-  const j = await r.json();
-  const imgs = (j.images || []).map(x => x.image?.base64Data).filter(Boolean);
-  return imgs;
-}
-
-function b64ToImgEl(b64){
-  const img = new Image();
-  img.src = 'data:image/png;base64,' + b64;
-  img.loading='lazy';
-  return img;
-}
-
-function addToGallery(base64Arr){
-  for(const b64 of base64Arr){
-    const wrap = document.createElement('div');
-    wrap.className='thumb';
-    const img = b64ToImgEl(b64);
-    wrap.appendChild(img);
-    gallery.prepend(wrap);
-  }
-}
-
-// ---------- UI actions ----------
-window.addEventListener('DOMContentLoaded',()=>{
-  loadKey();
-  document.getElementById('saveKey').onclick = saveKey;
-  document.getElementById('clearKey').onclick = clearKey;
-
-  $$('#\[data-preset\]').forEach(btn=>{
-    btn.addEventListener('click',()=>{
-      const preset = btn.dataset.preset;
-      const map={
-        japandi:'Phong cách Japandi, vật liệu gỗ sồi + vải lanh, ánh sáng dịu, cây xanh vừa phải, palette trung tính.',
-        scandinavian:'Scandinavian sáng sủa, trắng + gỗ sáng, cửa sổ lớn, ánh sáng tự nhiên.',
-        industrial:'Industrial, bê tông trần, kim loại đen, gạch thô, đèn treo công nghiệp.',
-        'modern-villa':'Biệt thự hiện đại, kính lớn, lam gỗ ngang, bể bơi, vườn tối giản.'
-      };
-      const ta = document.getElementById('userNotes');
-      ta.value = (ta.value? ta.value+' ': '') + (map[preset]||preset);
-    })
-  })
-
-  document.getElementById('btnOnlyPrompt').onclick = async ()=>{
-    try{
-      log('Đang dựng prompt bằng Gemini…');
-      const imgs = await filesToBase64(document.getElementById('imageInput').files);
-      const out = await callGeminiPrompt({system:buildSystemPrompt(), user:buildUserPrompt(), images:imgs});
-      showPrompt(out); log('Đã tạo prompt.');
-    }catch(e){ log(e.message) }
-  };
-
-  document.getElementById('btnRun').onclick = async ()=>{
-    const task = document.getElementById('task').value;
-    try{
-      log('Đang xử lý…');
-      const imgs = await filesToBase64(document.getElementById('imageInput').files);
-      const prompt = await callGeminiPrompt({system:buildSystemPrompt(), user:buildUserPrompt(), images:imgs});
-      showPrompt(prompt);
-
-      const useImagen = document.getElementById('useImagen').checked;
-      if(!useImagen){ log('Chỉ tạo prompt (Imagen bị tắt).'); return }
-
-      // If editing and have a base image → try edit; else generate
-      if(task==='image-edit' && imgs.length){
-        const b64 = imgs[0].data; // dùng ảnh đầu tiên làm nền để sửa
-        const outImgs = await callImagenEdit(prompt, b64);
-        if(outImgs.length){ addToGallery(outImgs); log('Đã chỉnh sửa ảnh (Imagen Edit).'); }
-        else{ log('Không nhận được ảnh từ Imagen Edit.'); }
-      } else {
-        const outImgs = await callImagenGenerate(prompt, 2);
-        if(outImgs.length){ addToGallery(outImgs); log('Đã tạo ảnh (Imagen Generate).'); }
-        else{ log('Không nhận được ảnh từ Imagen Generate.'); }
-      }
-    }catch(e){ log(e.message) }
-  };
-});
-</script>
+        function showError(message) {
+            const errorDiv = document.getElementById('error');
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+        }
+    </script>
 </body>
 </html>
